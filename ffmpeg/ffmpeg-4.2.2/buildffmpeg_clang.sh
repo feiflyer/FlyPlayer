@@ -1,6 +1,6 @@
 #!/bin/bash
 NDK=/Users/liangchuanfei/Documents/Android/SDK/android-ndk-r20b
-API=16
+API=21
 # arm aarch64 i686 x86_64
 ARCH=arm
 # armv7a aarch64 i686 x86_64
@@ -38,7 +38,7 @@ build_one()
 --enable-gpl --enable-nonfree --enable-version3 --disable-iconv --enable-neon --enable-hwaccels \
 --enable-jni \
 --enable-mediacodec \
---enable-avdevice  \
+--disable-avdevice  \
 --disable-decoders --enable-decoder=vp9 --enable-decoder=h264 --enable-decoder=mpeg4 --enable-decoder=aac --enable-decoder=h264_mediacodec \
 --disable-postproc \
 --extra-cflags="$CFLAG" \
