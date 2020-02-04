@@ -1,47 +1,54 @@
 #!/bin/bash
-
-ADDI_CFLAGS="-marm"
-API=21
-PLATFORM=arm-linux-androideabi
-CPU=armv7-a
-
-#自己本地的ndk路径。
-NDK_ROOT=/Users/liangchuanfei/Documents/Android/SDK/android-ndk-r16b
-
-#指定库文件的查找路径
-SYSROOT=$NDK_ROOT/platforms/android-$API/arch-arm/
-
-ISYSROOT=$NDK_ROOT/sysroot
-
-ASM=$ISYSROOT/usr/include/$PLATFORM
-
-TOOLCHAIN=$NDK_ROOT/toolchains/$PLATFORM-4.9/prebuilt/darwin-x86_64
-#自己指定一个输出目录，用来放生成的文件的。
-OUTPUT=`pwd`/android_out
-
-function build
+NDK=/Users/liangchuanfei/Documents/Android/SDK/android-ndk-r20b
+API=16
+# arm aarch64 i686 x86_64
+ARCH=arm
+# armv7a aarch64 i686 x86_64
+PLATFORM=armv7a
+TARGET=$PLATFORM-linux-androideabi
+TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin
+SYSROOT=$NDK/sysroot
+PREFIX=./Android_out/$PLATFORM
+ 
+CFLAG="-D__ANDROID_API__=$API -U_FILE_OFFSET_BITS -DBIONIC_IOCTL_NO_SIGNEDNESS_OVERLOAD -Os -fPIC -DANDROID -D__thumb__ -mthumb -Wfatal-errors -Wno-deprecated -mfloat-abi=softfp -marm"
+ 
+build_one()
 {
 ./configure \
---prefix=$OUTPUT \
+--ln_s="cp -rf" \
+--prefix=$PREFIX \
+--cc=$TOOLCHAIN/$TARGET$API-clang \
+--cxx=$TOOLCHAIN/$TARGET$API-clang++ \
+--ld=$TOOLCHAIN/$TARGET$API-clang \
+--target-os=android \
+--arch=$ARCH \
+--cpu=$PLATFORM \
+--cross-prefix=$TOOLCHAIN/$ARCH-linux-androideabi- \
+--enable-cross-compile \
 --enable-shared \
 --disable-static \
+--enable-runtime-cpudetect \
 --disable-doc \
 --disable-ffmpeg \
 --disable-ffplay \
 --disable-ffprobe \
---disable-avdevice \
 --disable-doc \
 --disable-symver \
---cross-prefix=$TOOLCHAIN/bin/arm-linux-androideabi- \
---target-os=android \
---arch=arm \
---enable-cross-compile \
---sysroot=$SYSROOT \
---extra-cflags="-I$ASM -isysroot $ISYSROOT -Os -fpic -marm" \
---extra-ldflags="-marm" \
-$ADDITIONAL_CONFIGURE_FLAG
-  make clean
-  make
-  make install
+--enable-small \
+--enable-gpl --enable-nonfree --enable-version3 --disable-iconv --enable-neon --enable-hwaccels \
+--enable-jni \
+--enable-mediacodec \
+--enable-avdevice  \
+--disable-decoders --enable-decoder=vp9 --enable-decoder=h264 --enable-decoder=mpeg4 --enable-decoder=aac --enable-decoder=h264_mediacodec \
+--disable-postproc \
+--extra-cflags="$CFLAG" \
+--extra-ldflags="-marm"
 }
-build
+ 
+build_one
+ 
+make clean
+ 
+make -j4
+ 
+make install
