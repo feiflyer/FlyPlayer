@@ -19,7 +19,6 @@ CFLAG="-D__ANDROID_API__=$API -U_FILE_OFFSET_BITS -DBIONIC_IOCTL_NO_SIGNEDNESS_O
 
 build_one()
 {
-#执行configure脚本，用于生成makefile
 ./configure \
 --ln_s="cp -rf" \
 --prefix=$PREFIX \
@@ -30,7 +29,6 @@ build_one()
 --arch=$ARCH \
 --cpu=$PLATFORM \
 --cross-prefix=$TOOLCHAIN/$ARCH-linux-androideabi- \
-# 开启交叉编译
 --enable-cross-compile \
 --enable-shared \
 --disable-static \
@@ -41,7 +39,6 @@ build_one()
 --disable-ffprobe \
 --disable-doc \
 --disable-symver \
-# 优化大小
 --enable-small \
 --enable-gpl \
 --enable-nonfree \
@@ -51,7 +48,6 @@ build_one()
 --enable-hwaccels \
 --enable-jni \
 --enable-mediacodec \
-# 关闭avdevice模块，此模块在android中无用
 --disable-avdevice  \
 --disable-decoders \
 --enable-decoder=vp9 \
@@ -60,7 +56,6 @@ build_one()
 --enable-decoder=aac \
 --enable-decoder=h264_mediacodec \
 --disable-postproc \
-# 会传给编译器的参数
 --extra-cflags="$CFLAG" \
 --extra-ldflags="-marm"
 }

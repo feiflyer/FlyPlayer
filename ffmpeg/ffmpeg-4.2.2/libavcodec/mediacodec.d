@@ -8,4 +8,5 @@ libavcodec/mediacodec.o: libavcodec/mediacodec.c config.h \
   libavutil/pixfmt.h libavutil/libm.h libavutil/intfloat.h \
   libavutil/mathematics.h libavutil/rational.h libavutil/buffer.h \
   libavutil/channel_layout.h libavutil/frame.h libavutil/hwcontext.h \
-  libavcodec/version.h
+  libavcodec/version.h libavcodec/ffjni.h \
+  libavcodec/mediacodecdec_common.h libavcodec/mediacodec_wrapper.h
