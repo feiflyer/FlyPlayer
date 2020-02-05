@@ -1,4 +1,10 @@
 package com.flyer.ffmpeg;
 
-public class FFmpegUtils {
+public final class FFmpegUtils {
+
+    static {
+        System.loadLibrary("flyffmpeg-lib");
+    }
+
+    public native static String getFFmpegVersion();
 }

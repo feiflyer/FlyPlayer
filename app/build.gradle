@@ -14,22 +14,24 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        externalNativeBuild {
-            cmake {
-                cppFlags "-std=c++11"
+
+        externalNativeBuild(){
+            cmake{
+                // 为什么在这里指定编译架构会报so库找不到的错误，而在ndk中指定则不会？？？
+//                abiFilters "armeabi-v7a" //指定编译为 armeabi-v7a
+            }
+
+            ndk {
+                abiFilters "armeabi-v7a"
             }
         }
+
     }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-            version "3.10.2"
         }
     }
 }
@@ -43,4 +45,5 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation project(path: ':ffmpeg')
 }

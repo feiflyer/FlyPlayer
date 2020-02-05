@@ -14,6 +14,33 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
+
+        externalNativeBuild(){
+            cmake{
+                // 为什么在这里指定编译架构会报so库找不到的错误，而在ndk中指定则不会？？？
+//                abiFilters "armeabi-v7a" //指定编译为 armeabi-v7a
+            }
+
+            ndk {
+                abiFilters "armeabi-v7a"
+            }
+        }
+
+        sourceSets {
+            main {
+                //将依赖库打进apk,否则可能出现找不到库
+                jniLibs.srcDirs = ['libs']
+            }
+        }
+
+    }
+
+
+    externalNativeBuild(){
+        cmake{
+            //指定构建 CMakeLists的位置
+            path 'CMakeLists.txt'
+        }
     }
 
     buildTypes {

@@ -2,12 +2,12 @@
 cmake_minimum_required(VERSION 3.4.1)
 
 # 引入FFmpeg的头文件
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/include)
 
 # 方式一
 # 引入FFmpeg的库文件，设置内部的方式引入，指定库的目录是 -L  指定具体的库-l
 # 这种方式方便快捷
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${CMAKE_SOURCE_DIR}/${CMAKE_ANDROID_ARCH_ABI}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${CMAKE_SOURCE_DIR}/libs/${CMAKE_ANDROID_ARCH_ABI}")
 
 # 方式二
 #设置ffmpeg库所在路径的变量
@@ -31,7 +31,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${CMAKE_SOURCE_DIR}/${CMAKE_ANDROID_AR
 #set_target_properties(avfilter PROPERTIES IMPORTED_LOCATION ${FF}/libavfilter.so)
 
 #找到包含所有的cpp文件
-file(GLOB allCpp *.cpp)
+file(GLOB allCpp src/main/cpp/*.*)
 
 add_library(
              # 生成的库的名字
