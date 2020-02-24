@@ -32,4 +32,10 @@
         android:text="解码为yuv"
         android:onClick="decode2yuv"/>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="播放解码视频surfaceView"
+        android:onClick="playVideo"/>
+
 </LinearLayout>

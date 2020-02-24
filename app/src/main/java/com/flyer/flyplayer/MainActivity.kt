@@ -1,5 +1,6 @@
 package com.flyer.flyplayer
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -25,6 +26,10 @@ class MainActivity : AppCompatActivity() {
         val videoPath = "/sdcard/Download/video.mp4"
         val yuvPath = "/sdcard/Download/video_yuv.yuv"
         FFmpegUtils.decodeVideo2YUV(videoPath,yuvPath)
+    }
+
+    fun playVideo(view: View) {
+        startActivity(Intent(this,PlayerActivity::class.java))
     }
 
 

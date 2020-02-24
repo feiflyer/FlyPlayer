@@ -56,4 +56,5 @@ target_link_libraries( #目标库
                        swresample
 
                        # NDK中的log库
+                       android
                        log )

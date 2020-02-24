@@ -15,8 +15,8 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        externalNativeBuild(){
-            cmake{
+        externalNativeBuild() {
+            cmake {
                 // 为什么在这里指定编译架构会报so库找不到的错误，而在ndk中指定则不会？？？
 //                abiFilters "armeabi-v7a" //指定编译为 armeabi-v7a
             }
@@ -38,7 +38,7 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.core:core-ktx:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
