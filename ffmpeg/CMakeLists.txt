@@ -55,6 +55,13 @@ target_link_libraries( #目标库
                        swscale
                        swresample
 
+
                        # NDK中的log库
                        android
-                       log )
+                       log
+
+
+                        #引入opengl的相关库
+                       GLESv2
+                       EGL
+                          )

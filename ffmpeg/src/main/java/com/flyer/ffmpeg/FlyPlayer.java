@@ -33,9 +33,12 @@ public class FlyPlayer extends SurfaceView implements SurfaceHolder.Callback,Run
     @Override
     public void run() {
 
-        playVideo("/sdcard/Download/video.mp4",getHolder().getSurface());
+//      playVideo("/sdcard/Download/video.mov",getHolder().getSurface());
+      playVideoByOpenGL("/sdcard/Download/video.mov",getHolder().getSurface());
     }
 
 
     public native void playVideo(String videoPath, Surface surface);
+
+    public native void playVideoByOpenGL(String videoPath, Surface surface);
 }
