@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
 
     fun decode2yuv(view: View) {
 
-        val videoPath = "/sdcard/Download/video.mp4"
+        val videoPath = "/sdcard/Download/video.mov"
         val yuvPath = "/sdcard/Download/video_yuv.yuv"
         FFmpegUtils.decodeVideo2YUV(videoPath,yuvPath)
     }
@@ -32,5 +32,8 @@ class MainActivity : AppCompatActivity() {
         startActivity(Intent(this,PlayerActivity::class.java))
     }
 
+    fun playAudio(view: View) {
+        FFmpegUtils.playAudio("/sdcard/Download/video.mov")
+    }
 
 }

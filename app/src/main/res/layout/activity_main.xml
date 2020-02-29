@@ -38,4 +38,10 @@
         android:text="播放解码视频surfaceView"
         android:onClick="playVideo"/>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="播放解码音频数据"
+        android:onClick="playAudio"/>
+
 </LinearLayout>

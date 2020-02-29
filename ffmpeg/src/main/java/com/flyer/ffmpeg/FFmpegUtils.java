@@ -23,4 +23,6 @@ public final class FFmpegUtils {
      * @return 0表示成功，其他代表失败
      */
     public native static int analyzeMedia(String mediaPath);
+
+    public native static int playAudio(String audioPath);
 }
