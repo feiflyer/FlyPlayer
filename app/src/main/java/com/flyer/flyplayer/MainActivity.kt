@@ -36,4 +36,8 @@ class MainActivity : AppCompatActivity() {
         FFmpegUtils.playAudio("/sdcard/Download/video.mov")
     }
 
+    fun playAudioByOpensles(view: View) {
+        FFmpegUtils.playAudio("/sdcard/Download/video.mp4")
+    }
+
 }

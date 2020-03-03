@@ -44,4 +44,11 @@
         android:text="播放解码音频数据"
         android:onClick="playAudio"/>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="使用openSLES播放解码音频数据"
+        android:onClick="playAudioByOpensles"/>
+
+
 </LinearLayout>

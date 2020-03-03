@@ -61,6 +61,10 @@ target_link_libraries( #目标库
                        log
 
 
+                       # 引入OpenSLES渲染音频
+                       OpenSLES
+
+
                         #引入opengl的相关库
                        GLESv2
                        EGL

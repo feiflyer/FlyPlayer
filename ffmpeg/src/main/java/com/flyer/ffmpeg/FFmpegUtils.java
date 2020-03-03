@@ -25,4 +25,6 @@ public final class FFmpegUtils {
     public native static int analyzeMedia(String mediaPath);
 
     public native static int playAudio(String audioPath);
+
+    public native static int playAudioByOpenSLES(String audioPath);
 }

@@ -12,6 +12,9 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 
+#include <SLES/OpenSLES.h>
+#include <SLES/OpenSLES_Android.h>
+
 // 因为ffmpeg是纯C代码，要在cpp中使用则需要使用 extern "C"
 extern "C" {
 #include "libavutil/avutil.h"
@@ -104,6 +107,166 @@ GLint InitShader(const char *code, GLint type) {
     return sh;
 }
 
+//1 创建引擎
+static SLObjectItf  engineSL = NULL;
+SLEngineItf CreateSL()
+{
+    SLresult re;
+    SLEngineItf en;
+    re = slCreateEngine(&engineSL,0,0,0,0,0);
+    if(re != SL_RESULT_SUCCESS) return NULL;
+    re = (*engineSL)->Realize(engineSL,SL_BOOLEAN_FALSE);
+    if(re != SL_RESULT_SUCCESS) return NULL;
+    re = (*engineSL)->GetInterface(engineSL,SL_IID_ENGINE,&en);
+    if(re != SL_RESULT_SUCCESS) return NULL;
+    return en;
+}
+
+const char *path = NULL;
+
+void PcmCall(SLAndroidSimpleBufferQueueItf bf,void *contex)
+{
+    LOGE("PcmCall");
+
+    AVFormatContext *fmt_ctx;
+    // 初始化格式化上下文
+    fmt_ctx = avformat_alloc_context();
+
+    // 使用ffmpeg打开文件
+    int re = avformat_open_input(&fmt_ctx, path, nullptr, nullptr);
+    if (re != 0) {
+        LOGE("打开文件失败：%s", av_err2str(re));
+        return;
+    }
+
+    //探测流索引
+    re = avformat_find_stream_info(fmt_ctx, nullptr);
+
+    if (re < 0) {
+        LOGE("索引探测失败：%s", av_err2str(re));
+        return;
+    }
+
+    //寻找视频流索引
+    int audio_idx = av_find_best_stream(
+            fmt_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+
+    if (audio_idx == -1) {
+        LOGE("获取音频流索引失败");
+        return;
+    }
+    //解码器参数
+    AVCodecParameters *c_par;
+    //解码器上下文
+    AVCodecContext *cc_ctx;
+    //声明一个解码器
+    const AVCodec *codec;
+
+    c_par = fmt_ctx->streams[audio_idx]->codecpar;
+
+    //通过id查找解码器
+    codec = avcodec_find_decoder(c_par->codec_id);
+
+    if (!codec) {
+
+        LOGE("查找解码器失败");
+        return;
+    }
+
+    //用参数c_par实例化编解码器上下文，，并打开编解码器
+    cc_ctx = avcodec_alloc_context3(codec);
+
+    // 关联解码器上下文
+    re = avcodec_parameters_to_context(cc_ctx, c_par);
+
+    if (re < 0) {
+        LOGE("解码器上下文关联失败:%s", av_err2str(re));
+        return;
+    }
+
+    //打开解码器
+    re = avcodec_open2(cc_ctx, codec, nullptr);
+
+    if (re != 0) {
+        LOGE("打开解码器失败:%s", av_err2str(re));
+        return;
+    }
+
+    //数据包
+    AVPacket *pkt;
+    //数据帧
+    AVFrame *frame;
+
+    //初始化
+    pkt = av_packet_alloc();
+    frame = av_frame_alloc();
+
+    //音频重采样
+
+    int dataSize = av_samples_get_buffer_size(NULL, av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO) , cc_ctx->frame_size,AV_SAMPLE_FMT_S16, 0);
+
+    uint8_t *resampleOutBuffer = (uint8_t *) malloc(dataSize);
+
+    //音频重采样上下文初始化
+    SwrContext *actx = swr_alloc();
+    actx = swr_alloc_set_opts(actx,
+                              AV_CH_LAYOUT_STEREO,
+                              AV_SAMPLE_FMT_S16,44100,
+                              cc_ctx->channels,
+                              cc_ctx->sample_fmt,cc_ctx->sample_rate,
+                              0,0 );
+    re = swr_init(actx);
+    if(re != 0)
+    {
+        LOGE("swr_init failed:%s",av_err2str(re));
+        return;
+    }
+
+    while (av_read_frame(fmt_ctx, pkt) >= 0) {//持续读帧
+        // 只解码音频流
+        if (pkt->stream_index == audio_idx) {
+
+            //发送数据包到解码器
+            avcodec_send_packet(cc_ctx, pkt);
+
+            //清理
+            av_packet_unref(pkt);
+
+            //这里为什么要使用一个for循环呢？
+            // 因为avcodec_send_packet和avcodec_receive_frame并不是一对一的关系的
+            //一个avcodec_send_packet可能会出发多个avcodec_receive_frame
+            for (;;) {
+                // 接受解码的数据
+                re = avcodec_receive_frame(cc_ctx, frame);
+                if (re != 0) {
+                    break;
+                } else {
+
+                    //音频重采样
+                    int len = swr_convert(actx,&resampleOutBuffer,
+                                          frame->nb_samples,
+                                          (const uint8_t**)frame->data,
+                                          frame->nb_samples);
+
+
+                    (*bf)->Enqueue(bf,resampleOutBuffer,len);
+
+                }
+            }
+
+        }
+    }
+
+    //关闭环境
+    avcodec_free_context(&cc_ctx);
+    // 释放资源
+    av_frame_free(&frame);
+    av_packet_free(&pkt);
+
+    avformat_free_context(fmt_ctx);
+
+    LOGE("音频播放完毕");
+}
 
 /**
  * 将数据转换成double类型的一个方法
@@ -1020,4 +1183,91 @@ Java_com_flyer_ffmpeg_FFmpegUtils_playAudio(JNIEnv *env, jclass clazz, jstring a
     env->ReleaseStringUTFChars(audio_path, path);
 
     return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_flyer_ffmpeg_FFmpegUtils_playAudioByOpenSLES(JNIEnv *env, jclass clazz,
+                                                      jstring audio_path) {
+    path = env->GetStringUTFChars(audio_path, 0);
+
+
+   // 初始化OpenSL ES
+
+    //1 创建引擎
+    SLEngineItf eng = CreateSL();
+    if(eng){
+        LOGE("CreateSL success！ ");
+    }else{
+        LOGE("CreateSL failed！ ");
+    }
+
+    //2 创建混音器
+    SLObjectItf mix = NULL;
+    SLresult re = 0;
+    re = (*eng)->CreateOutputMix(eng,&mix,0,0,0);
+    if(re !=SL_RESULT_SUCCESS )
+    {
+        LOGE("SL_RESULT_SUCCESS failed!");
+    }
+    re = (*mix)->Realize(mix,SL_BOOLEAN_FALSE);
+    if(re !=SL_RESULT_SUCCESS )
+    {
+        LOGE("(*mix)->Realize failed!");
+    }
+    SLDataLocator_OutputMix outmix = {SL_DATALOCATOR_OUTPUTMIX,mix};
+    SLDataSink audioSink= {&outmix,0};
+
+    //3 配置音频信息
+    //缓冲队列
+    SLDataLocator_AndroidSimpleBufferQueue que = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,10};
+    //音频格式
+    SLDataFormat_PCM pcm = {
+            SL_DATAFORMAT_PCM,
+            2,//    声道数
+            SL_SAMPLINGRATE_44_1,
+            SL_PCMSAMPLEFORMAT_FIXED_16,
+            SL_PCMSAMPLEFORMAT_FIXED_16,
+            SL_SPEAKER_FRONT_LEFT|SL_SPEAKER_FRONT_RIGHT,
+            SL_BYTEORDER_LITTLEENDIAN //字节序，小端
+    };
+    SLDataSource ds = {&que,&pcm};
+
+    //4 创建播放器
+    SLObjectItf player = NULL;
+    SLPlayItf iplayer = NULL;
+    SLAndroidSimpleBufferQueueItf pcmQue = NULL;
+    const SLInterfaceID ids[] = {SL_IID_BUFFERQUEUE};
+    const SLboolean req[] = {SL_BOOLEAN_TRUE};
+    re = (*eng)->CreateAudioPlayer(eng,&player,&ds,&audioSink,sizeof(ids)/sizeof(SLInterfaceID),ids,req);
+    if(re !=SL_RESULT_SUCCESS )
+    {
+        LOGE("CreateAudioPlayer failed!");
+    } else{
+        LOGE("CreateAudioPlayer success!");
+    }
+    (*player)->Realize(player,SL_BOOLEAN_FALSE);
+    //获取player接口
+    re = (*player)->GetInterface(player,SL_IID_PLAY,&iplayer);
+    if(re !=SL_RESULT_SUCCESS )
+    {
+        LOGE("GetInterface SL_IID_PLAY failed!");
+    }
+    re = (*player)->GetInterface(player,SL_IID_BUFFERQUEUE,&pcmQue);
+    if(re !=SL_RESULT_SUCCESS )
+    {
+        LOGE("GetInterface SL_IID_BUFFERQUEUE failed!");
+    }
+
+    //设置回调函数，播放队列空调用
+    (*pcmQue)->RegisterCallback(pcmQue,PcmCall,0);
+
+    //设置为播放状态
+    (*iplayer)->SetPlayState(iplayer,SL_PLAYSTATE_PLAYING);
+
+    //启动队列回调
+    (*pcmQue)->Enqueue(pcmQue,"",1);
+
+    return 0;
+
 }
